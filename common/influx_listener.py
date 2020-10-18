@@ -3,6 +3,7 @@ import locust.env
 import gevent
 import csv
 from datetime import datetime, timezone
+import configparser
 
 
 class InfluxListener:
@@ -10,8 +11,12 @@ class InfluxListener:
     def __init__(self, env: locust.env.Environment):
         self._finished = False
         self._line_tracker = 0
-        self._client = InfluxDBClient(host='localhost', port=8086)
-        self._client.switch_database('locust')
+        self._config = configparser.ConfigParser()
+        self._config.read("config.ini")
+        host = self._config["influxdb"]["host"]
+        port = int(self._config["influxdb"]["port"])
+        self._client = InfluxDBClient(host=host, port=port)
+        self._client.switch_database("locust")
         self.env = env
         self._background = gevent.spawn(self._run)
         events = self.env.events
