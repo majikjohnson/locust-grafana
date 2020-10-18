@@ -1,0 +1,1 @@
+Locust streams logs to InfluxDB for visualisation in Grafana

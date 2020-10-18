@@ -1,0 +1,20 @@
+---
+- name: Add apt key for InfluxDB repository
+  apt_key:
+    url: https://repos.influxdata.com/influxdb.key
+    state: present
+
+- name: Add apt repository for InfluxDB
+  apt_repository:
+    repo: deb https://repos.influxdata.com/{{ distrib_id }} {{ distrib_codename }} stable
+    state: present
+
+- name: Install InfluxDB
+  apt:
+    name: influxdb
+    state: present
+
+- name: Start InfluxDB service
+  service:
+    name: influxdb
+    state: started
