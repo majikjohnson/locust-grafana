@@ -1,3 +1,14 @@
+grafana_host: http://pi-master.local
+grafana_port: 3000
+
 grafana_dependencies:
   - apt-transport-https
   - software-properties-common
+
+grafana_admin_user: admin
+grafana_admin_password: admin
+
+grafana_user_name: Tester
+grafana_user_email: tester@testingninja.co.uk
+grafana_user_login: tester
+grafana_user_password: tester

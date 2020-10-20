@@ -1,0 +1,25 @@
+---
+- name: Check if user Grafana user exists
+  uri:
+    url: "{{ grafana_host }}:{{ grafana_port }}/api/users/lookup?loginOrEmail={{ grafana_user_login }}"
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: yes
+    status_code: [200, 404]
+  register: check_user_response
+
+- name: Create Grafana user if user doesn't already exist
+  uri:
+    url: "{{ grafana_host }}:{{ grafana_port }}/api/admin/users"
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: yes
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('template', 'add_user.json.j2') }}"
+    body_format: json
+    return_content: true
+    status_code: 200
+  when: check_user_response.status == 404
+  register: add_user_response

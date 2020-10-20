@@ -1,26 +1,3 @@
 ---
-- name: Install Grafana dependencies
-  apt:
-    name: "{{ grafana_dependencies }}"
-    state: present
-
-- name: Add apt key for Grafana repository
-  apt_key:
-    url: https://packages.grafana.com/gpg.key
-    state: present
-
-- name: Add Grafana repository
-  apt_repository:
-    repo: deb https://packages.grafana.com/oss/deb stable main
-    state: present
-    update_cache: true
-
-- name: Install Grafana
-  apt:
-    name: grafana
-    state: present
-
-- name: Start Grafana server service
-  service:
-    name: grafana-server
-    state: started
+- include: install.yml
+- include: configure.yml
