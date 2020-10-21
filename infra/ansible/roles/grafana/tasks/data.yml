@@ -1,0 +1,23 @@
+---
+- name: Setup InfluxDB datasource
+  copy:
+    dest: /etc/grafana/provisioning/datasources/ansible.yml
+    src: ds-influxdb.yml
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: restart grafana
+
+- name: Add Locust dashboard via Grafana API
+  uri:
+    url: "{{ grafana_host }}:{{ grafana_port }}/api/dashboards/db"
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: yes
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: "{{ lookup('file', 'dashboard-locust.json') }}"
+    body_format: json
+    return_content: true
+    status_code: 200
