@@ -8,6 +8,18 @@
     mode: "0640"
   notify: restart grafana
 
+- name: Check if Locust dashboard exists via Grafana API
+  uri:
+    url: "{{ grafana_host }}:{{ grafana_port }}/api/dashboards/uid/{{ grafana_locust_dashbaord_uid }}"
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    force_basic_auth: yes
+    method: GET
+    return_content: true
+    status_code: [200, 404]
+  register: check_locust_dashboard
+  
+
 - name: Add Locust dashboard via Grafana API
   uri:
     url: "{{ grafana_host }}:{{ grafana_port }}/api/dashboards/db"
@@ -17,7 +29,8 @@
     method: POST
     headers:
       Content-Type: application/json
-    body: "{{ lookup('file', 'dashboard-locust.json') }}"
+    body: "{{ lookup('template', 'dashboard-locust.json.j2') }}"
     body_format: json
     return_content: true
     status_code: 200
+  when: check_locust_dashboard.status == 404

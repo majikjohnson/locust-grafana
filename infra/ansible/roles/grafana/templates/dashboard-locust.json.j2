@@ -23,23 +23,10 @@
 		"provisionedExternalId": ""
 	},
 	"dashboard": {
-		"annotations": {
-			"list": [
-				{
-					"builtIn": 1,
-					"datasource": "-- Grafana --",
-					"enable": true,
-					"hide": true,
-					"iconColor": "rgba(0, 211, 255, 1)",
-					"name": "Annotations & Alerts",
-					"type": "dashboard"
-				}
-			]
-		},
 		"editable": true,
 		"gnetId": null,
 		"graphTooltip": 0,
-		"id": 2,
+		"id": null,
 		"links": [],
 		"panels": [
 			{
@@ -47,7 +34,7 @@
 				"bars": false,
 				"dashLength": 10,
 				"dashes": false,
-				"datasource": "InfluxDB",
+				"datasource": "InfluxDB_v1",
 				"description": "",
 				"fieldConfig": {
 					"defaults": {
@@ -182,7 +169,7 @@
 				"bars": false,
 				"dashLength": 10,
 				"dashes": false,
-				"datasource": null,
+				"datasource": "InfluxDB_v1",
 				"fieldConfig": {
 					"defaults": {
 						"custom": {}
@@ -323,7 +310,7 @@
 				}
 			},
 			{
-				"datasource": "InfluxDB",
+				"datasource": "InfluxDB_v1",
 				"fieldConfig": {
 					"defaults": {
 						"custom": {
@@ -473,7 +460,7 @@
 		"timepicker": {},
 		"timezone": "",
 		"title": "Locust",
-		"uid": "Dr-tHq5Mk",
+		"uid": "{{ grafana_locust_dashbaord_uid }}",
 		"version": 15
 	}
 }

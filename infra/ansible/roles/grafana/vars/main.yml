@@ -12,3 +12,5 @@ grafana_user_name: Tester
 grafana_user_email: tester@testingninja.co.uk
 grafana_user_login: tester
 grafana_user_password: tester
+
+grafana_locust_dashbaord_uid: Dr-tHq5Mk
