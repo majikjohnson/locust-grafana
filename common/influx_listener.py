@@ -1,9 +1,12 @@
 from influxdb import InfluxDBClient
 import locust.env
+from locust.exception import CatchResponseError
 import gevent
 import csv
 from datetime import datetime, timezone
 import configparser
+from typing import List
+import numpy as np
 
 
 class InfluxListener:
@@ -18,16 +21,90 @@ class InfluxListener:
         self._client = InfluxDBClient(host=host, port=port)
         self._client.switch_database("locust")
         self.env = env
+        self._samples: List[dict] = []
         self._background = gevent.spawn(self._run)
         events = self.env.events
+        events.request_success.add_listener(self.request_success)
+        events.request_failure.add_listener(self.request_failure)
         events.quitting.add_listener(self.quitting)
 
     def _run(self):
         while True:
-            self._write_results_to_db()
+            samples_buffer = self._samples
+            self._samples = []
+            self._write_samples_to_db(samples_buffer)
+            # self._write_results_to_db()
             if self._finished:
                 break
-            gevent.sleep(5)
+            gevent.sleep(1)
+
+    def _write_samples_to_db(self, samples):
+        sample_dict = {}
+
+        for sample in samples:
+            if sample["request_type"] == "N/A":
+                continue
+            name = sample["name"]
+            response_time = sample["response_time"]
+            length = sample["response_length"]
+            failure = sample["failure"]
+            if name not in sample_dict:
+                response_times = []
+                response_times.append(response_time)
+                lengths = []
+                lengths.append(length)
+
+                sample_dict[name] = {
+                    "name": name,
+                    "request_type": sample["request_type"],
+                    "response_time_samples": response_times,
+                    "length_samples": lengths,
+                    "min_response_time": response_time,
+                    "max_response_time": response_time,
+                    "total_requests": 1,
+                    "total_failures": failure
+                }
+            else:
+                sample_dict[name]["response_time_samples"].append(response_time)
+                sample_dict[name]["length_samples"].append(length)
+                sample_dict[name]["total_requests"] += 1
+                sample_dict[name]["total_failures"] += failure
+                if response_time > sample_dict[name]["max_response_time"]:
+                    sample_dict[name]["max_response_time"] = response_time
+                if response_time < sample_dict[name]["min_response_time"]:
+                    sample_dict[name]["min_response_time"] = response_time
+
+        json_body = []
+        for name in sample_dict:
+            sample_dict[name]["average_response_time"] = np.mean(sample_dict[name]["response_time_samples"])
+            sample_dict[name]["median_response_time"] = np.percentile(sample_dict[name]["response_time_samples"], 50)
+            sample_dict[name]["90_percentile"] = np.percentile(sample_dict[name]["response_time_samples"], 90)
+            sample_dict[name]["95_percentile"] = np.percentile(sample_dict[name]["response_time_samples"], 95)
+            sample_dict[name]["avg_content_length"] = round(np.mean(sample_dict[name]["length_samples"]))
+            sample_dict[name]["min_response_time"] = np.amin(sample_dict[name]["response_time_samples"])
+            sample_dict[name]["max_response_time"] = np.amax(sample_dict[name]["response_time_samples"])
+
+            json_body.append({
+                "measurement": "requests_v2",
+                "tags": {
+                    "request_type": sample_dict[name]["request_type"],
+                    "name": sample_dict[name]["name"]
+                },
+                "fields": {
+                    "avg_response_time": sample_dict[name]["average_response_time"],
+                    "median_response_time": sample_dict[name]["median_response_time"],
+                    "90_percentile": sample_dict[name]["90_percentile"],
+                    "95_percentile": sample_dict[name]["95_percentile"],
+                    "min_response_time": sample_dict[name]["min_response_time"],
+                    "max_response_time": sample_dict[name]["max_response_time"],
+                    "avg_content_length": sample_dict[name]["avg_content_length"],
+                    "requests_per_second": sample_dict[name]["total_requests"],
+                    "failures_per_second": sample_dict[name]["total_failures"],
+
+                },
+                "time": sample["time"]
+            })
+        self._client.write_points(json_body)
 
     def _write_results_to_db(self):
         json_body = []
@@ -66,6 +143,41 @@ class InfluxListener:
                 lines_in_file = index
             self._line_tracker = lines_in_file
             self._client.write_points(json_body)
+
+    def request_success(self, request_type, name, response_time, response_length, **_kwargs):
+        self._log_request(request_type, name, response_time,
+                          response_length, 0, None)
+
+    def request_failure(self, request_type, name, response_time, response_length, exception, **_kwargs):
+        self._log_request(request_type, name, response_time,
+                          response_length, 1, exception)
+
+    def _log_request(self, request_type, name, response_time, response_length, failure, exception):
+        sample = {
+            "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+            "request_type": request_type,
+            "name": name,
+            "failure": failure,
+            "response_time": response_time,
+        }
+
+        if response_length >= 0:
+            sample["response_length"] = response_length
+        else:
+            sample["response_length"] = None
+
+        if exception:
+            if isinstance(exception, CatchResponseError):
+                sample["exception"] = str(exception)
+            else:
+                try:
+                    sample["exception"] = repr(exception)
+                except AttributeError:
+                    sample["exception"] = f"{exception.__class__} (and it has no string representation)"
+        else:
+            sample["exception"] = None
+
+        self._samples.append(sample)
 
     def quitting(self, **_kwargs):
         self._finished = True
