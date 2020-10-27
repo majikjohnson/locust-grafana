@@ -1,0 +1,4 @@
+.venv/
+infra/
+example_*
+README.md
