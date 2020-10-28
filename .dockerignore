@@ -2,3 +2,5 @@
 infra/
 example_*
 README.md
+Dockerfile
+kubernetes/
