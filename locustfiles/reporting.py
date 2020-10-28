@@ -1,5 +1,6 @@
 from locust import HttpUser, task, between, events
 from common.influx_listener import InfluxListener
+import os
 
 
 class MyUser(HttpUser):
@@ -21,4 +22,5 @@ class MyUser(HttpUser):
 
 @events.init.add_listener
 def on_locust_init(environment, **_kwargs):
-    InfluxListener(env=environment)
+    config_file = os.getenv("LOCUST_CONFIG", "config.ini")
+    InfluxListener(env=environment, config=config_file)

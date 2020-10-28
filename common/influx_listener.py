@@ -11,11 +11,11 @@ import numpy as np
 
 class InfluxListener:
 
-    def __init__(self, env: locust.env.Environment):
+    def __init__(self, env: locust.env.Environment, config):
         self._finished = False
         self._line_tracker = 0
         self._config = configparser.ConfigParser()
-        self._config.read("config.ini")
+        self._config.read(config)
         host = self._config["influxdb"]["host"]
         port = int(self._config["influxdb"]["port"])
         self._client = InfluxDBClient(host=host, port=port)
@@ -65,7 +65,8 @@ class InfluxListener:
                     "total_failures": failure
                 }
             else:
-                sample_dict[name]["response_time_samples"].append(response_time)
+                sample_dict[name]["response_time_samples"].append(
+                    response_time)
                 sample_dict[name]["length_samples"].append(length)
                 sample_dict[name]["total_requests"] += 1
                 sample_dict[name]["total_failures"] += failure
@@ -76,13 +77,20 @@ class InfluxListener:
 
         json_body = []
         for name in sample_dict:
-            sample_dict[name]["average_response_time"] = np.mean(sample_dict[name]["response_time_samples"])
-            sample_dict[name]["median_response_time"] = np.percentile(sample_dict[name]["response_time_samples"], 50)
-            sample_dict[name]["90_percentile"] = np.percentile(sample_dict[name]["response_time_samples"], 90)
-            sample_dict[name]["95_percentile"] = np.percentile(sample_dict[name]["response_time_samples"], 95)
-            sample_dict[name]["avg_content_length"] = round(np.mean(sample_dict[name]["length_samples"]))
-            sample_dict[name]["min_response_time"] = np.amin(sample_dict[name]["response_time_samples"])
-            sample_dict[name]["max_response_time"] = np.amax(sample_dict[name]["response_time_samples"])
+            sample_dict[name]["average_response_time"] = np.mean(
+                sample_dict[name]["response_time_samples"])
+            sample_dict[name]["median_response_time"] = np.percentile(
+                sample_dict[name]["response_time_samples"], 50)
+            sample_dict[name]["90_percentile"] = np.percentile(
+                sample_dict[name]["response_time_samples"], 90)
+            sample_dict[name]["95_percentile"] = np.percentile(
+                sample_dict[name]["response_time_samples"], 95)
+            sample_dict[name]["avg_content_length"] = round(
+                np.mean(sample_dict[name]["length_samples"]))
+            sample_dict[name]["min_response_time"] = np.amin(
+                sample_dict[name]["response_time_samples"])
+            sample_dict[name]["max_response_time"] = np.amax(
+                sample_dict[name]["response_time_samples"])
 
             json_body.append({
                 "measurement": "requests_v2",
@@ -91,13 +99,18 @@ class InfluxListener:
                     "name": sample_dict[name]["name"]
                 },
                 "fields": {
-                    "avg_response_time": sample_dict[name]["average_response_time"],
-                    "median_response_time": sample_dict[name]["median_response_time"],
+                    "avg_response_time":
+                        sample_dict[name]["average_response_time"],
+                    "median_response_time":
+                        sample_dict[name]["median_response_time"],
                     "90_percentile": sample_dict[name]["90_percentile"],
                     "95_percentile": sample_dict[name]["95_percentile"],
-                    "min_response_time": sample_dict[name]["min_response_time"],
-                    "max_response_time": sample_dict[name]["max_response_time"],
-                    "avg_content_length": sample_dict[name]["avg_content_length"],
+                    "min_response_time":
+                        sample_dict[name]["min_response_time"],
+                    "max_response_time":
+                        sample_dict[name]["max_response_time"],
+                    "avg_content_length":
+                        sample_dict[name]["avg_content_length"],
                     "requests_per_second": sample_dict[name]["total_requests"],
                     "failures_per_second": sample_dict[name]["total_failures"],
 
@@ -144,15 +157,18 @@ class InfluxListener:
             self._line_tracker = lines_in_file
             self._client.write_points(json_body)
 
-    def request_success(self, request_type, name, response_time, response_length, **_kwargs):
+    def request_success(self, request_type, name, response_time,
+                        response_length, **_kwargs):
         self._log_request(request_type, name, response_time,
                           response_length, 0, None)
 
-    def request_failure(self, request_type, name, response_time, response_length, exception, **_kwargs):
+    def request_failure(self, request_type, name, response_time,
+                        response_length, exception, **_kwargs):
         self._log_request(request_type, name, response_time,
                           response_length, 1, exception)
 
-    def _log_request(self, request_type, name, response_time, response_length, failure, exception):
+    def _log_request(self, request_type, name, response_time,
+                     response_length, failure, exception):
         sample = {
             "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
             "request_type": request_type,
@@ -173,7 +189,7 @@ class InfluxListener:
                 try:
                     sample["exception"] = repr(exception)
                 except AttributeError:
-                    sample["exception"] = f"{exception.__class__} (and it has no string representation)"
+                    sample["exception"] = f"{exception.__class__}"
         else:
             sample["exception"] = None
 
