@@ -28,3 +28,4 @@ spec:
         - containerPort: 5557
         volumeMounts:
         - mountPath: "/mnt/locust/"
+          name: nfs-pv-locustfiles
