@@ -14,11 +14,17 @@ spec:
       labels:
         app: locust-master
     spec:
+      volumes:
+      - name: nfs-pv-locustfiles
+        persistentVolumeClaim:
+          claimName: nfs-pv-claim
       containers:
       - name: locust-master 
         image: majikjohnson/tn-locust:testing
         imagePullPolicy: Always
-        args: ["-f", "/opt/locust/locustfiles/reporting.py"]
+        args: ["-f", "/mnt/locust/locustfiles/reporting.py"]
         ports:
         - containerPort: 8089
         - containerPort: 5557
+        volumeMounts:
+        - mountPath: "/mnt/locust/"
