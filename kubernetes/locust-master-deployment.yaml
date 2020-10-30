@@ -27,5 +27,5 @@ spec:
         - containerPort: 8089
         - containerPort: 5557
         volumeMounts:
-        - mountPath: "/mnt/locust/"
+        - mountPath: "/mnt/"
           name: nfs-pv-locustfiles
