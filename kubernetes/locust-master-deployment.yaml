@@ -15,8 +15,10 @@ spec:
         app: locust-master
     spec:
       containers:
-      - name: 
+      - name: locust-master 
         image: majikjohnson/tn-locust:testing
+        imagePullPolicy: Always
+        args: ["-f", "/opt/locust/locustfiles/reporting.py"]
         ports:
         - containerPort: 8089
         - containerPort: 5557
