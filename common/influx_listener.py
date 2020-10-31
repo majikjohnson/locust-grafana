@@ -96,7 +96,8 @@ class InfluxListener:
                 "measurement": "requests_v2",
                 "tags": {
                     "request_type": sample_dict[name]["request_type"],
-                    "name": sample_dict[name]["name"]
+                    "name": sample_dict[name]["name"],
+                    "greenlet": greenlet.getcurrent()
                 },
                 "fields": {
                     "avg_response_time":
