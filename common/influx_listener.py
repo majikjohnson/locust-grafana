@@ -3,6 +3,7 @@ import locust.env
 from locust.exception import CatchResponseError
 import gevent
 import csv
+import os
 from datetime import datetime, timezone
 import configparser
 from typing import List
@@ -121,6 +122,7 @@ class InfluxListener:
                     "tags": {
                         "request_type": sample_dict[greenlet_id][name]["request_type"],
                         "name": sample_dict[greenlet_id][name]["name"],
+                        "worker_id": os.getenv("WORKER_ID", "default"),
                         "greenlet": greenlet_id
                     },
                     "fields": {

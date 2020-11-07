@@ -23,6 +23,11 @@ spec:
         image: majikjohnson/tn-locust:testing
         imagePullPolicy: Always
         args: ["-f", "/mnt/locust/locustfiles/reporting.py", "--worker", "--master-host", "locust-master-service"]
+        env:
+        - name: WORKER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         volumeMounts:
         - mountPath: "/mnt/"
           name: nfs-pv-locustfiles
